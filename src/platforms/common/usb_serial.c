@@ -33,10 +33,13 @@
  * IN  1 GDB CDC DATA
  * OUT 1 GDB CDC DATA
  * IN  2 GDB CDC CTR
- * IN  3 UART CDC DATA
- * OUT 3 UART CDC DATA
- * OUT 4 UART CDC CTRL
- * In  5 Trace Capture
+ * IN  3 UART1 CDC DATA
+ * OUT 3 UART1 CDC DATA
+ * OUT 4 UART1 CDC CTRL
+ * IN  5 UART2 CDC DATA
+ * OUT 5 UART2 CDC DATA
+ * OUT 6 UART2 CDC CTRL
+ * In  7 Trace Capture
  *
  */
 
@@ -135,13 +138,13 @@ static usbd_request_return_codes_e debug_serial_control_request(usbd_device *dev
 {
 	(void)complete;
 	/* Is the request for the physical/debug UART interface? */
-	if (req->wIndex != UART_IF_NO)
+	if (req->wIndex != UART1_IF_NO && req->wIndex != UART2_IF_NO)
 		return USBD_REQ_NEXT_CALLBACK;
 
 	switch (req->bRequest) {
 	case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
 		/* Send a notification back on the notification endpoint */
-		usb_serial_set_state(dev, req->wIndex, CDCACM_UART_ENDPOINT + 1U);
+		usb_serial_set_state(dev, req->wIndex, (req->wIndex == UART1_IF_NO ? CDCACM_UART1_ENDPOINT : CDCACM_UART2_ENDPOINT) + 1U);
 #ifdef USBUSART_DTR_PIN
 		gpio_set_val(USBUSART_PORT, USBUSART_DTR_PIN, !(req->wValue & 1U));
 #endif
@@ -191,12 +194,19 @@ void usb_serial_set_config(usbd_device *dev, uint16_t value)
 	usbd_ep_setup(dev, CDCACM_GDB_ENDPOINT | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE, NULL);
 	usbd_ep_setup(dev, (CDCACM_GDB_ENDPOINT + 1U) | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_INTERRUPT, 16, NULL);
 
-	/* Serial interface */
+	/* Serial UART1 interface */
 	usbd_ep_setup(
-		dev, CDCACM_UART_ENDPOINT, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE / 2U, debug_serial_receive_callback);
-	usbd_ep_setup(dev, CDCACM_UART_ENDPOINT | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE,
+		dev, CDCACM_UART1_ENDPOINT, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE / 2U, debug_serial_receive_callback);
+	usbd_ep_setup(dev, CDCACM_UART1_ENDPOINT | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE,
 		debug_serial_send_callback);
-	usbd_ep_setup(dev, (CDCACM_UART_ENDPOINT + 1U) | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_INTERRUPT, 16, NULL);
+	usbd_ep_setup(dev, (CDCACM_UART1_ENDPOINT + 1U) | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_INTERRUPT, 16, NULL);
+
+	/* Serial UART2 interface */
+	usbd_ep_setup(
+		dev, CDCACM_UART2_ENDPOINT, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE / 2U, debug_serial_receive_callback);
+	usbd_ep_setup(dev, CDCACM_UART2_ENDPOINT | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE,
+		debug_serial_send_callback);
+	usbd_ep_setup(dev, (CDCACM_UART2_ENDPOINT + 1U) | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_INTERRUPT, 16, NULL);
 
 #ifdef PLATFORM_HAS_TRACESWO
 	/* Trace interface */
@@ -212,7 +222,8 @@ void usb_serial_set_config(usbd_device *dev, uint16_t value)
 	 * Allows the use of /dev/tty* devices on *BSD/MacOS
 	 */
 	usb_serial_set_state(dev, GDB_IF_NO, CDCACM_GDB_ENDPOINT);
-	usb_serial_set_state(dev, UART_IF_NO, CDCACM_UART_ENDPOINT);
+	usb_serial_set_state(dev, UART1_IF_NO, CDCACM_UART1_ENDPOINT);
+	usb_serial_set_state(dev, UART2_IF_NO, CDCACM_UART2_ENDPOINT);
 
 #if defined(ENABLE_DEBUG) && defined(PLATFORM_HAS_DEBUG)
 	initialise_monitor_handles();
@@ -225,7 +236,7 @@ void debug_serial_send_stdout(const uint8_t *const data, const size_t len)
 		const size_t count = MIN(len - offset, CDCACM_PACKET_SIZE);
 		nvic_disable_irq(USB_IRQ);
 		/* XXX: Do we actually care if this fails? Possibly not.. */
-		usbd_ep_write_packet(usbdev, CDCACM_UART_ENDPOINT, data + offset, count);
+		usbd_ep_write_packet(usbdev, CDCACM_UART1_ENDPOINT, data + offset, count);
 		nvic_enable_irq(USB_IRQ);
 	}
 }
@@ -243,7 +254,7 @@ uint32_t debug_serial_fifo_send(const char *const fifo, const uint32_t fifo_begi
 		packet[packet_len++] = fifo[fifo_index++];
 
 	if (packet_len) {
-		const uint16_t written = usbd_ep_write_packet(usbdev, CDCACM_UART_ENDPOINT, packet, packet_len);
+		const uint16_t written = usbd_ep_write_packet(usbdev, CDCACM_UART1_ENDPOINT, packet, packet_len);
 		return (fifo_begin + written) % AUX_UART_BUFFER_SIZE;
 	}
 	return fifo_begin;

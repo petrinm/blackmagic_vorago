@@ -174,20 +174,29 @@ static const usb_iface_assoc_descriptor_s gdb_assoc = {
 
 /* Physical/debug UART interface */
 
-static const usb_endpoint_descriptor_s uart_comm_endp = {
+static const usb_endpoint_descriptor_s uart1_comm_endp = {
 	.bLength = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
-	.bEndpointAddress = (CDCACM_UART_ENDPOINT + 1U) | USB_REQ_TYPE_IN,
+	.bEndpointAddress = (CDCACM_UART1_ENDPOINT + 1U) | USB_REQ_TYPE_IN,
 	.bmAttributes = USB_ENDPOINT_ATTR_INTERRUPT,
 	.wMaxPacketSize = 16,
 	.bInterval = USB_MAX_INTERVAL,
 };
 
-static const usb_endpoint_descriptor_s uart_data_endp[] = {
+static const usb_endpoint_descriptor_s uart2_comm_endp = {
+	.bLength = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType = USB_DT_ENDPOINT,
+	.bEndpointAddress = (CDCACM_UART2_ENDPOINT + 1U) | USB_REQ_TYPE_IN,
+	.bmAttributes = USB_ENDPOINT_ATTR_INTERRUPT,
+	.wMaxPacketSize = 16,
+	.bInterval = USB_MAX_INTERVAL,
+};
+
+static const usb_endpoint_descriptor_s uart1_data_endp[] = {
 	{
 		.bLength = USB_DT_ENDPOINT_SIZE,
 		.bDescriptorType = USB_DT_ENDPOINT,
-		.bEndpointAddress = CDCACM_UART_ENDPOINT,
+		.bEndpointAddress = CDCACM_UART1_ENDPOINT,
 		.bmAttributes = USB_ENDPOINT_ATTR_BULK,
 #if defined(USB_HS)
 		.wMaxPacketSize = CDCACM_PACKET_SIZE,
@@ -199,7 +208,31 @@ static const usb_endpoint_descriptor_s uart_data_endp[] = {
 	{
 		.bLength = USB_DT_ENDPOINT_SIZE,
 		.bDescriptorType = USB_DT_ENDPOINT,
-		.bEndpointAddress = CDCACM_UART_ENDPOINT | USB_REQ_TYPE_IN,
+		.bEndpointAddress = CDCACM_UART1_ENDPOINT | USB_REQ_TYPE_IN,
+		.bmAttributes = USB_ENDPOINT_ATTR_BULK,
+		.wMaxPacketSize = CDCACM_PACKET_SIZE,
+		.bInterval = 1,
+	},
+};
+
+
+static const usb_endpoint_descriptor_s uart2_data_endp[] = {
+	{
+		.bLength = USB_DT_ENDPOINT_SIZE,
+		.bDescriptorType = USB_DT_ENDPOINT,
+		.bEndpointAddress = CDCACM_UART2_ENDPOINT,
+		.bmAttributes = USB_ENDPOINT_ATTR_BULK,
+#if defined(USB_HS)
+		.wMaxPacketSize = CDCACM_PACKET_SIZE,
+#else
+		.wMaxPacketSize = CDCACM_PACKET_SIZE / 2U,
+#endif
+		.bInterval = 1,
+	},
+	{
+		.bLength = USB_DT_ENDPOINT_SIZE,
+		.bDescriptorType = USB_DT_ENDPOINT,
+		.bEndpointAddress = CDCACM_UART2_ENDPOINT | USB_REQ_TYPE_IN,
 		.bmAttributes = USB_ENDPOINT_ATTR_BULK,
 		.wMaxPacketSize = CDCACM_PACKET_SIZE,
 		.bInterval = 1,
@@ -225,7 +258,7 @@ static const struct {
 			.bDescriptorType = CS_INTERFACE,
 			.bDescriptorSubtype = USB_CDC_TYPE_CALL_MANAGEMENT,
 			.bmCapabilities = 0,
-			.bDataInterface = UART_IF_NO + 1U,
+			.bDataInterface = UART1_IF_NO + 1U,
 		},
 	.acm =
 		{
@@ -239,15 +272,15 @@ static const struct {
 			.bFunctionLength = sizeof(usb_cdc_union_descriptor_s),
 			.bDescriptorType = CS_INTERFACE,
 			.bDescriptorSubtype = USB_CDC_TYPE_UNION,
-			.bControlInterface = UART_IF_NO,
-			.bSubordinateInterface0 = UART_IF_NO + 1U,
+			.bControlInterface = UART1_IF_NO,
+			.bSubordinateInterface0 = UART1_IF_NO + 1U,
 		},
 };
 
-static const usb_interface_descriptor_s uart_comm_iface = {
+static const usb_interface_descriptor_s uart1_comm_iface = {
 	.bLength = USB_DT_INTERFACE_SIZE,
 	.bDescriptorType = USB_DT_INTERFACE,
-	.bInterfaceNumber = UART_IF_NO,
+	.bInterfaceNumber = UART1_IF_NO,
 	.bAlternateSetting = 0,
 	.bNumEndpoints = 1,
 	.bInterfaceClass = USB_CLASS_CDC,
@@ -255,16 +288,34 @@ static const usb_interface_descriptor_s uart_comm_iface = {
 	.bInterfaceProtocol = USB_CDC_PROTOCOL_NONE,
 	.iInterface = 5,
 
-	.endpoint = &uart_comm_endp,
+	.endpoint = &uart1_comm_endp,
 
 	.extra = &uart_cdcacm_functional_descriptors,
 	.extralen = sizeof(uart_cdcacm_functional_descriptors),
 };
 
-static const usb_interface_descriptor_s uart_data_iface = {
+
+static const usb_interface_descriptor_s uart2_comm_iface = {
 	.bLength = USB_DT_INTERFACE_SIZE,
 	.bDescriptorType = USB_DT_INTERFACE,
-	.bInterfaceNumber = UART_IF_NO + 1U,
+	.bInterfaceNumber = UART2_IF_NO,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 1,
+	.bInterfaceClass = USB_CLASS_CDC,
+	.bInterfaceSubClass = USB_CDC_SUBCLASS_ACM,
+	.bInterfaceProtocol = USB_CDC_PROTOCOL_NONE,
+	.iInterface = 5,
+
+	.endpoint = &uart2_comm_endp,
+
+	.extra = &uart_cdcacm_functional_descriptors,
+	.extralen = sizeof(uart_cdcacm_functional_descriptors),
+};
+
+static const usb_interface_descriptor_s uart1_data_iface = {
+	.bLength = USB_DT_INTERFACE_SIZE,
+	.bDescriptorType = USB_DT_INTERFACE,
+	.bInterfaceNumber = UART1_IF_NO + 1U,
 	.bAlternateSetting = 0,
 	.bNumEndpoints = 2,
 	.bInterfaceClass = USB_CLASS_DATA,
@@ -272,13 +323,38 @@ static const usb_interface_descriptor_s uart_data_iface = {
 	.bInterfaceProtocol = 0,
 	.iInterface = 0,
 
-	.endpoint = uart_data_endp,
+	.endpoint = uart1_data_endp,
 };
 
-static const usb_iface_assoc_descriptor_s uart_assoc = {
+static const usb_interface_descriptor_s uart2_data_iface = {
+	.bLength = USB_DT_INTERFACE_SIZE,
+	.bDescriptorType = USB_DT_INTERFACE,
+	.bInterfaceNumber = UART2_IF_NO + 1U,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 2,
+	.bInterfaceClass = USB_CLASS_DATA,
+	.bInterfaceSubClass = 0,
+	.bInterfaceProtocol = 0,
+	.iInterface = 0,
+
+	.endpoint = uart2_data_endp,
+};
+
+static const usb_iface_assoc_descriptor_s uart1_assoc = {
 	.bLength = USB_DT_INTERFACE_ASSOCIATION_SIZE,
 	.bDescriptorType = USB_DT_INTERFACE_ASSOCIATION,
-	.bFirstInterface = UART_IF_NO,
+	.bFirstInterface = UART1_IF_NO,
+	.bInterfaceCount = 2,
+	.bFunctionClass = USB_CLASS_CDC,
+	.bFunctionSubClass = USB_CDC_SUBCLASS_ACM,
+	.bFunctionProtocol = USB_CDC_PROTOCOL_NONE,
+	.iFunction = 5,
+};
+
+static const usb_iface_assoc_descriptor_s uart2_assoc = {
+	.bLength = USB_DT_INTERFACE_ASSOCIATION_SIZE,
+	.bDescriptorType = USB_DT_INTERFACE_ASSOCIATION,
+	.bFirstInterface = UART2_IF_NO,
 	.bInterfaceCount = 2,
 	.bFunctionClass = USB_CLASS_CDC,
 	.bFunctionSubClass = USB_CDC_SUBCLASS_ACM,
@@ -375,12 +451,21 @@ static const usb_interface_s ifaces[] = {
 	},
 	{
 		.num_altsetting = 1,
-		.iface_assoc = &uart_assoc,
-		.altsetting = &uart_comm_iface,
+		.iface_assoc = &uart1_assoc,
+		.altsetting = &uart1_comm_iface,
 	},
 	{
 		.num_altsetting = 1,
-		.altsetting = &uart_data_iface,
+		.altsetting = &uart1_data_iface,
+	},
+	{
+		.num_altsetting = 1,
+		.iface_assoc = &uart2_assoc,
+		.altsetting = &uart2_comm_iface,
+	},
+	{
+		.num_altsetting = 1,
+		.altsetting = &uart2_data_iface,
 	},
 	{
 		.num_altsetting = 1,
@@ -393,6 +478,8 @@ static const usb_interface_s ifaces[] = {
 		.iface_assoc = &trace_assoc,
 		.altsetting = &trace_iface,
 	},
+#endif
+#if defined(SECOND_RTT)
 #endif
 };
 

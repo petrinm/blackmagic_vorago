@@ -46,6 +46,8 @@ static bool decoding = false;
 static uint8_t trace_usb_buf[64];
 static uint8_t trace_usb_buf_size;
 
+#define CDCACM_UART_ENDPOINT CDCACM_UART1_ENDPOINT
+
 void traceswo_init(uint32_t swo_chan_bitmask)
 {
 	TRACE_TIM_CLK_EN();

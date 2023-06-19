@@ -223,7 +223,7 @@ static void find_rtt(target_s *const cur_target)
 static rtt_retval_e read_rtt(target_s *const cur_target, const uint32_t i)
 {
 	/* copy data from recv_buf to target rtt 'down' buffer */
-	if (rtt_nodata())
+	if (rtt_nodata(i))
 		return RTT_IDLE;
 
 	if (cur_target == NULL || rtt_channel[i].buf_addr == 0 || rtt_channel[i].buf_size == 0)
@@ -237,7 +237,7 @@ static rtt_retval_e read_rtt(target_s *const cur_target, const uint32_t i)
 		const uint32_t next_head = (rtt_channel[i].head + 1U) % rtt_channel[i].buf_size;
 		if (rtt_channel[i].tail == next_head)
 			break;
-		const int ch = rtt_getchar();
+		const int ch = rtt_getchar(i);
 		if (ch == -1)
 			break;
 		if (target_mem_write(cur_target, rtt_channel[i].buf_addr + rtt_channel[i].head, &ch, 1))
@@ -320,7 +320,7 @@ static rtt_retval_e print_rtt(target_s *const cur_target, const uint32_t i)
 		return RTT_ERR;
 
 	/* write buffer to usb */
-	rtt_write(xmit_buf, bytes_read);
+	rtt_write(i, xmit_buf, bytes_read);
 
 	return RTT_OK;
 }

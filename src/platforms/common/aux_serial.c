@@ -88,6 +88,8 @@ static char aux_serial_transmit_buffer[AUX_UART_BUFFER_SIZE];
 #define usart_set_parity(uart, parity)     uart_set_parity(uart, parity)
 #endif
 
+#define CDCACM_UART_ENDPOINT CDCACM_UART1_ENDPOINT
+
 static void aux_serial_set_baudrate(const uint32_t baud_rate)
 {
 	usart_set_baudrate(USBUSART, baud_rate);
