@@ -25,6 +25,9 @@
 #include "riscv_debug.h"
 #include "jtag_devs.h"
 
+/* Vorago JTAG controller JTAG-DP handler */
+void vorago_jtag_dp_handler(const uint8_t dev_index);
+
 const jtag_dev_descr_s dev_descr[] = {
 	{
 		.idcode = 0x0ba00477U,
@@ -415,6 +418,12 @@ const jtag_dev_descr_s dev_descr[] = {
 		.idcode = 0x000007a3U,
 		.idmask = 0x00000fffU,
 		.descr = "Gigadevice BSD.",
+	},
+	{
+		.idcode = 0x040047E3U,
+		.idmask = 0xFFFF0FFFU,
+		.descr = "Vorago Controller",
+		.handler = vorago_jtag_dp_handler,
 	},
 	/* Just for fun, unsupported */
 	{

@@ -91,7 +91,8 @@ SRC =              \
 	renesas_ra.c   \
 	target.c       \
 	target_flash.c \
-	target_probe.c
+	target_probe.c \
+	vorago.c
 
 ifeq (,$(filter all_platforms,$(MAKECMDGOALS)))
 include $(PLATFORM_DIR)/Makefile.inc

@@ -629,7 +629,8 @@ bool cortexm_probe(adiv5_access_port_s *ap)
 		 * All of these have braces as a brake from the standard so they're completely
 		 * consistent and easier to add new probe calls to.
 		 */
-		if (target->part_id == 0x4c0U) {        /* Cortex-M0+ ROM */
+        PROBE(vorago_probe); // TODO: More accurate filtering
+        if (target->part_id == 0x4c0U) {        /* Cortex-M0+ ROM */
 			PROBE(lpc11xx_probe);               /* LPC8 */
 			PROBE(hc32l110_probe);              /* HDSC HC32L110 */
 		} else if (target->part_id == 0x4c1U) { /* NXP Cortex-M0+ ROM */
